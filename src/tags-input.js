@@ -401,16 +401,32 @@ export default function TagsInputDirective($timeout, $document, $window, $q, tag
         })
         .on('input-keydown', event => {
           let key = event.keyCode;
-
-          if (tiUtil.isModifierOn(event) || hotkeys.indexOf(key) === -1) {
-            return;
-          }
+          let inputChar = event.key;
 
           let addKeys = {
             [tiConstants.KEYS.enter]: options.addOnEnter,
-            [tiConstants.KEYS.comma]: options.addOnComma,
             [tiConstants.KEYS.space]: options.addOnSpace
           };
+
+          // For any other key - business as usual
+          if (inputChar !== ",") {
+            if (tiUtil.isModifierOn(event) || hotkeys.indexOf(key) === -1) {
+              return;
+            }
+          } else {
+            // In russian keyboard layout "б" is placed under the "," key.
+            // Comma is located under SHIFT + 6 combination.
+
+            // This means it's the russian ","
+            // Override the keyCode to comma
+            if (inputChar === "," && event.shiftKey) {
+              key = tiConstants.KEYS.comma
+            }
+
+            // Add the comma key to the available pool as per config
+            addKeys[[tiConstants.KEYS.comma]] = options.addOnComma
+          }
+
 
           let shouldAdd = !options.addFromAutocompleteOnly && addKeys[key];
           let shouldRemove = (key === tiConstants.KEYS.backspace || key === tiConstants.KEYS.delete) && tagList.selected;
